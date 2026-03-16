@@ -1,0 +1,204 @@
+---
+title: "Views & templates"
+description: "All XML view and template IDs in Tema Zonaweb — QWeb website templates, website.page records, backend Odoo views, and navigation menu entries."
+---
+
+## Overview
+
+The module ships four XML files under `views/`. Each file has a specific scope:
+
+<CardGroup cols={2}>
+  <Card title="website_templates.xml" icon="browser">
+    QWeb templates for every public-facing page, plus the theme layout override
+    that injects CSS custom properties.
+  </Card>
+  <Card title="website_pages.xml" icon="link">
+    `website.page` records that register URLs, set publish/index flags, and bind
+    a template to each route.
+  </Card>
+  <Card title="bidding_request_views.xml" icon="table">
+    Backend Odoo views (list, form, kanban), a window action, and menu items
+    nested under the Sales app.
+  </Card>
+  <Card title="website_menu.xml" icon="bars">
+    `website.menu` entries appended to the main website navigation bar.
+  </Card>
+</CardGroup>
+
+---
+
+## `website_templates.xml` — template inventory
+
+| Template ID | Key | Name | Base template | Purpose |
+|---|---|---|---|---|
+| `theme_layout` | `zonaweb_website.theme_layout` | Zonaweb Theme Layout | `website.layout` | Injects CSS custom properties into `<head>` |
+| `zonaweb_homepage` | `zonaweb_website.zonaweb_homepage` | Zonaweb Homepage | `website.homepage` | Replaces `#wrap` on the homepage |
+| `servicios_page` | `zonaweb_website.servicios_page` | Servicios | — | Full services page, calls `website.layout` |
+| `portafolio_page` | `zonaweb_website.portafolio_page` | Portafolio | — | Portfolio with filterable project cards |
+| `nosotros_page` | `zonaweb_website.nosotros_page` | Nosotros | — | About page with team and stats sections |
+| `bidding_page` | `zonaweb_website.bidding_page` | Licitaciones | — | Bidding form page at `/licencias` |
+| `bidding_thankyou` | `zonaweb_website.bidding_thankyou` | Bidding Thank You | — | Confirmation page rendered after form submission |
+
+---
+
+## `theme_layout` — CSS variable injection
+
+`theme_layout` inherits `website.layout` via XPath to insert a `<style>` block
+into the document `<head>`. This establishes the three core brand colours as
+CSS custom properties available to every element on the page:
+
+```xml
+<template id="theme_layout"
+          key="zonaweb_website.theme_layout"
+          name="Zonaweb Theme Layout"
+          inherit_id="website.layout">
+    <xpath expr="//head" position="inside">
+        <style>
+            :root {
+                --primary:   #0057FF;
+                --secondary: #0B1F3A;
+                --accent:    #00C2FF;
+            }
+        </style>
+    </xpath>
+</template>
+```
+
+| Variable | Hex value | Role |
+|---|---|---|
+| `--primary` | `#0057FF` | Main brand blue — buttons, links, highlights |
+| `--secondary` | `#0B1F3A` | Dark navy — hero backgrounds, footer |
+| `--accent` | `#00C2FF` | Cyan — labels, badges, decorative elements |
+
+<Tip>
+  Because these variables are declared on `:root`, any stylesheet loaded after
+  `theme_layout` — including `zonaweb_style.css` — can reference them with
+  `var(--primary)`, `var(--secondary)`, and `var(--accent)` without hardcoding
+  hex values.
+</Tip>
+
+---
+
+## `website_pages.xml` — page records
+
+The four `website.page` records register each URL in Odoo's website routing
+table and control SEO flags. The file uses `<data noupdate="1">` so that
+manual edits made through the website builder are not overwritten on module
+upgrade.
+
+```xml
+<data noupdate="1">
+    <record id="website_page_bidding" model="website.page">
+        <field name="name">Solicitar Licitación</field>
+        <field name="is_published">True</field>
+        <field name="website_indexed">True</field>
+        <field name="url">/licencias</field>
+        <field name="view_id" ref="bidding_page"/>
+    </record>
+    <!-- ... servicios, portafolio, nosotros follow the same pattern -->
+</data>
+```
+
+| Record ID | URL | `is_published` | `website_indexed` |
+|---|---|---|---|
+| `website_page_bidding` | `/licencias` | True | True |
+| `website_page_servicios` | `/servicios` | True | True |
+| `website_page_portafolio` | `/portafolio` | True | True |
+| `website_page_nosotros` | `/nosotros` | True | True |
+
+---
+
+## `bidding_request_views.xml` — backend views
+
+Three view types are defined for the `zonaweb.bidding.request` model, plus a
+window action and two menu items under the Sales app.
+
+### List view (`view_zonaweb_bidding_request_list`)
+
+Displays: `name`, `company_name`, `contact_name`, `email`, `service_type`,
+`state` (badge widget with colour coding), `create_date`.
+
+State badge colours:
+
+| State | Widget decoration |
+|---|---|
+| `approved` | `decoration-success` (green) |
+| `confirmed` | `decoration-warning` (yellow) |
+| `rejected` | `decoration-danger` (red) |
+
+### Form view (`view_zonaweb_bidding_request_form`)
+
+Features a status bar (`draft → confirmed → approved → rejected`) and
+context-sensitive action buttons in the header:
+
+```xml
+<button name="action_confirm" type="object" string="Confirmar"
+    class="btn-primary" invisible="state != 'draft'"/>
+<button name="action_approve" type="object" string="Aprobar"
+    class="btn-success" invisible="state != 'confirmed'"/>
+<button name="action_reject" type="object" string="Rechazar"
+    class="btn-danger" invisible="state not in ['draft', 'confirmed']"/>
+```
+
+The sheet body is divided into two column groups:
+- **Left:** `company_name`, `contact_name`, `email`, `phone`
+- **Right:** `service_type`, `estimated_budget`, `estimated_timeline`, `company_sector`
+- **Full width:** `project_description`, `specific_requirements`
+- **Chatter:** `message_follower_ids`, `activity_ids`, `message_ids`
+
+### Kanban view (`view_zonaweb_bidding_request_kanban`)
+
+Uses the Odoo 17+ `t-name="card"` template syntax. Each card shows:
+- Title: `name` (sequence reference)
+- Subtitle: `company_name`
+- Body: `contact_name`, `email`
+- Footer badge: `state` with the same colour decorations as the list view
+
+### Window action and menus
+
+```xml
+<record id="action_zonaweb_bidding_request" model="ir.actions.act_window">
+    <field name="name">Solicitudes de Licitación</field>
+    <field name="res_model">zonaweb.bidding.request</field>
+    <field name="view_mode">list,form,kanban</field>
+</record>
+
+<menuitem id="menu_zonaweb_bidding"  name="Licitaciones"
+    parent="sale.sale_menu_root"    sequence="10"/>
+<menuitem id="menu_zonaweb_bidding_requests" name="Solicitudes"
+    parent="menu_zonaweb_bidding"
+    action="action_zonaweb_bidding_request" sequence="10"/>
+```
+
+The two-level menu hierarchy appears under **Sales → Licitaciones → Solicitudes**
+in the Odoo backend.
+
+---
+
+## `website_menu.xml` — navigation entries
+
+Four `website.menu` records are injected as direct children of
+`website.main_menu`, forming the primary site navigation in the order defined
+by their `sequence` fields:
+
+```xml
+<record id="menu_servicios" model="website.menu">
+    <field name="name">Servicios</field>
+    <field name="url">/servicios</field>
+    <field name="parent_id" ref="website.main_menu"/>
+    <field name="sequence">10</field>
+</record>
+```
+
+| Record ID | Label | URL | Sequence |
+|---|---|---|---|
+| `menu_servicios` | Servicios | `/servicios` | 10 |
+| `menu_portafolio` | Portafolio | `/portafolio` | 20 |
+| `menu_nosotros` | Nosotros | `/nosotros` | 30 |
+| `menu_licitaciones` | Licitaciones | `/licencias` | 40 |
+
+<Info>
+  Sequence numbers control left-to-right ordering in the navigation bar.
+  Lower numbers appear first. Gaps between values (10, 20, 30, 40) leave
+  room to insert additional items between existing ones without renumbering.
+</Info>

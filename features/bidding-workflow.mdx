@@ -1,0 +1,91 @@
+---
+title: "Bidding workflow"
+description: "How bidding requests move from public submission through internal approval or rejection."
+---
+
+# Bidding workflow
+
+Bidding requests follow a four-state lifecycle managed by Odoo backend users.
+
+## State machine
+
+```
+[Public Form] → draft → confirmed → approved
+                                 ↘ rejected
+```
+
+| State | Trigger | Who can act |
+|---|---|---|
+| `draft` | Record created on form submission | — (automatic) |
+| `confirmed` | Manager clicks **Confirm** | Internal users |
+| `approved` | Manager clicks **Approve** | Internal users |
+| `rejected` | Manager clicks **Reject** | Internal users |
+
+## Full lifecycle
+
+<Steps>
+  <Step title="Public submission (draft)">
+    A visitor completes the form at `/licencias` and submits. The controller creates a `zonaweb.bidding.request` record with `state = 'draft'` and reference `BID/XXXXX`. A confirmation email is sent to the submitter.
+  </Step>
+  <Step title="Internal review (confirmed)">
+    An internal user opens the record in the Odoo backend and clicks **Confirm**. This calls `action_confirm()`, setting `state = 'confirmed'`. The change is logged in the chatter because `state` has `tracking=True`.
+  </Step>
+  <Step title="Decision: approved or rejected">
+    After evaluation, the manager clicks either **Approve** or **Reject**:
+    - **Approve** → calls `action_approve()`, sets `state = 'approved'`
+    - **Reject** → calls `action_reject()`, sets `state = 'rejected'`
+    Both transitions are logged in the chatter.
+  </Step>
+</Steps>
+
+## Action methods
+
+All three action methods are defined on the model and called from backend button clicks:
+
+```python
+def action_confirm(self):
+    self.write({'state': 'confirmed'})
+    return True
+
+def action_approve(self):
+    self.write({'state': 'approved'})
+    return True
+
+def action_reject(self):
+    self.write({'state': 'rejected'})
+    return True
+```
+
+<Note>
+These methods use `self.write()` rather than direct field assignment, which ensures Odoo's ORM tracking and chatter integration fires correctly for all records in `self` (supporting multi-record operations).
+</Note>
+
+## Chatter and tracking
+
+The model inherits from `mail.thread` and `mail.activity.mixin`:
+
+```python
+_inherit = ['mail.thread', 'mail.activity.mixin']
+```
+
+Fields with `tracking=True` automatically post a log note to the chatter whenever they change:
+- `company_name`
+- `contact_name`
+- `email`
+- `state`
+
+This means every state transition and contact detail change is auditable directly from the record's chatter.
+
+## Backend management
+
+To manage bidding requests in the Odoo backend:
+
+1. Go to **Website** (or **Sales** depending on menu configuration)
+2. Navigate to **Bidding Requests** (Solicitudes de Licitación)
+3. The list view shows all requests ordered by creation date (newest first, per `_order = 'create_date desc'`)
+4. Use the kanban view to drag requests between states
+5. Open a record to use the **Confirm**, **Approve**, or **Reject** buttons
+
+<Tip>
+Use the kanban view to get a visual overview of all requests by state. The kanban columns correspond to draft, confirmed, approved, and rejected states.
+</Tip>

@@ -1,0 +1,178 @@
+---
+title: "Data models"
+description: "ORM model reference for zonaweb.bidding.request — fields, workflow methods, sequence assignment, and access control rules."
+---
+
+## `zonaweb.bidding.request`
+
+The module defines a single model, `zonaweb.bidding.request`, declared in
+`models/bidding_request.py`. It stores every bidding request submitted through
+the public website form and tracks it through an internal review workflow.
+
+```python
+class BiddingRequest(models.Model):
+    _name        = 'zonaweb.bidding.request'
+    _description = 'Solicitud de Licitación Zonaweb'
+    _inherit     = ['mail.thread', 'mail.activity.mixin']
+    _order       = 'create_date desc'
+```
+
+| Attribute | Value | Effect |
+|---|---|---|
+| `_name` | `zonaweb.bidding.request` | Technical model name / database table |
+| `_inherit` | `mail.thread`, `mail.activity.mixin` | Adds chatter, followers, and scheduled activities |
+| `_order` | `create_date desc` | Default sort: newest records first |
+
+---
+
+## Fields
+
+### Identity & reference
+
+| Field | Type | Required | Attributes | Description |
+|---|---|---|---|---|
+| `name` | `Char` | Yes | `copy=False`, `readonly=True`, default `'Nuevo'` | Auto-assigned sequence reference (e.g. `ZW/2024/00001`). Read-only after creation. |
+| `company_id` | `Many2one` → `res.company` | No | default = current company | Links the request to the active Odoo company. |
+
+### Contact information
+
+| Field | Type | Required | Tracking | Description |
+|---|---|---|---|---|
+| `company_name` | `Char` | Yes | Yes | Name of the requesting organisation. |
+| `contact_name` | `Char` | Yes | Yes | Full name of the contact person. |
+| `email` | `Char` | Yes | Yes | Contact email address. |
+| `phone` | `Char` | No | No | Contact phone number. |
+
+### Project details
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `service_type` | `Selection` | Yes | Category of the requested service (see values below). |
+| `project_description` | `Text` | Yes | Free-text description of the project or need. |
+| `specific_requirements` | `Text` | No | Optional technical or functional requirements. |
+| `estimated_budget` | `Float` | No | Client's budget estimate. |
+| `estimated_timeline` | `Selection` | No | Preferred delivery window (see values below). |
+| `company_sector` | `Selection` | No | Industry sector of the requesting company (see values below). |
+
+### Workflow state
+
+| Field | Type | Required | Default | Tracking |
+|---|---|---|---|---|
+| `state` | `Selection` | — | `draft` | Yes |
+
+---
+
+## Selection field values
+
+<Tabs>
+  <Tab title="service_type">
+    | Key | Label |
+    |---|---|
+    | `software` | Desarrollo de Software |
+    | `infrastructure` | Infraestructura de Redes |
+    | `support` | Soporte Técnico |
+    | `security` | Seguridad Informática |
+    | `consulting` | Consultoría |
+    | `other` | Otro |
+  </Tab>
+  <Tab title="estimated_timeline">
+    | Key | Label |
+    |---|---|
+    | `normal` | Normal (2-4 semanas) |
+    | `urgent` | Urgente (1-2 semanas) |
+    | `flexible` | Flexible (1-3 meses) |
+  </Tab>
+  <Tab title="company_sector">
+    | Key | Label |
+    |---|---|
+    | `retail` | Retail |
+    | `manufacturing` | Manufactura |
+    | `services` | Servicios |
+    | `technology` | Tecnología |
+    | `healthcare` | Salud |
+    | `education` | Educación |
+    | `finance` | Finanzas |
+    | `other` | Otro |
+  </Tab>
+  <Tab title="state">
+    | Key | Label |
+    |---|---|
+    | `draft` | Borrador |
+    | `confirmed` | Confirmado |
+    | `approved` | Aprobado |
+    | `rejected` | Rechazado |
+  </Tab>
+</Tabs>
+
+---
+
+## Workflow methods
+
+Three button-triggered methods advance the record through its lifecycle:
+
+```python
+def action_confirm(self):
+    self.write({'state': 'confirmed'})
+    return True
+
+def action_approve(self):
+    self.write({'state': 'approved'})
+    return True
+
+def action_reject(self):
+    self.write({'state': 'rejected'})
+    return True
+```
+
+The form view controls button visibility via `invisible` domain attributes:
+
+| Button | Visible when |
+|---|---|
+| Confirmar | `state == 'draft'` |
+| Aprobar | `state == 'confirmed'` |
+| Rechazar | `state in ['draft', 'confirmed']` |
+
+---
+
+## `create` override and sequence assignment
+
+The model overrides `create` using the `@api.model_create_multi` decorator
+(Odoo 17+ batch-create API) to replace the default placeholder `'Nuevo'` with
+a value from the `ir.sequence` registry:
+
+```python
+@api.model_create_multi
+def create(self, vals_list):
+    for vals in vals_list:
+        if vals.get('name', _('Nuevo')) == _('Nuevo'):
+            vals['name'] = self.env['ir.sequence'].next_by_code(
+                'zonaweb.bidding.request'
+            )
+    return super().create(vals_list)
+```
+
+<Note>
+  The sequence record with code `zonaweb.bidding.request` must be defined in
+  `data/website_data.xml` before this model is used. The module ships that file
+  as part of its `data` list in the manifest.
+</Note>
+
+---
+
+## Security access matrix
+
+Defined in `security/ir.model.access.csv`:
+
+| Access ID | Group | Read | Write | Create | Delete |
+|---|---|:---:|:---:|:---:|:---:|
+| `access_zonaweb_bidding_request_user` | `base.group_user` (Internal user) | ✓ | ✓ | ✓ | — |
+| `access_zonaweb_bidding_request_manager` | `base.group_system` (Administrator) | ✓ | ✓ | ✓ | ✓ |
+| `access_zonaweb_bidding_request_public` | `base.group_public` (Public / portal) | — | — | ✓ | — |
+
+<Info>
+  Public users (unauthenticated website visitors) are granted **create-only**
+  access. The controller additionally calls `.sudo()` when creating records so
+  that the ORM bypass works even if the public user's group membership changes.
+  Internal users can read and edit but cannot delete; only administrators hold
+  full CRUD rights.
+</Info>

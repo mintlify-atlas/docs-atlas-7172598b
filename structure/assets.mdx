@@ -1,0 +1,133 @@
+---
+title: "Static assets"
+description: "Asset bundles, stylesheet, JavaScript file, and image inventory for the Tema Zonaweb module."
+---
+
+## Asset bundles
+
+Odoo's asset pipeline groups files into named bundles that are compiled,
+minified, and served to the browser. Tema Zonaweb registers files in two
+distinct bundles:
+
+```python
+'assets': {
+    'web.assets_frontend': [
+        'zonaweb_website/static/src/css/zonaweb_style.css',
+    ],
+    'website.assets_frontend': [
+        'zonaweb_website/static/src/js/zonaweb_script.js',
+    ],
+},
+```
+
+<CardGroup cols={2}>
+  <Card title="web.assets_frontend" icon="palette">
+    The base frontend bundle loaded on **every** Odoo page that renders HTML to
+    a browser — including the website, portal, and e-commerce. Adding CSS here
+    ensures the theme stylesheet is available before the first paint, regardless
+    of which website module is active.
+  </Card>
+  <Card title="website.assets_frontend" icon="code">
+    An extension bundle that is only loaded when the `website` module is active
+    and a website page is being rendered. JavaScript added here has access to
+    the website context (active website record, multi-website settings, website
+    editor) and to the full DOM of a rendered website page.
+  </Card>
+</CardGroup>
+
+### Why two different bundles?
+
+<Note>
+  Registering CSS in `web.assets_frontend` and JS in `website.assets_frontend`
+  is intentional and follows Odoo best-practice:
+
+  - **CSS** has no runtime dependencies — it only needs the browser's style
+    engine. Placing it in the broader `web.assets_frontend` bundle avoids any
+    risk of the stylesheet loading later than the HTML it styles.
+
+  - **JS** in this module uses website-specific features (carousel, counter
+    animations keyed to `.zw-hero`, portfolio filter buttons, etc.) that only
+    exist on website-rendered pages. Placing it in `website.assets_frontend`
+    guarantees those DOM elements are present when the script runs, and avoids
+    loading unnecessary JS on non-website Odoo pages.
+</Note>
+
+---
+
+## CSS — `zonaweb_style.css`
+
+**Bundle:** `web.assets_frontend`  
+**Path:** `zonaweb_website/static/src/css/zonaweb_style.css`
+
+This single stylesheet carries the full visual identity of the theme. It builds
+on the CSS custom properties injected by `theme_layout`:
+
+| Variable | Value | Usage |
+|---|---|---|
+| `--primary` | `#0057FF` | Primary brand blue |
+| `--secondary` | `#0B1F3A` | Dark navy backgrounds |
+| `--accent` | `#00C2FF` | Cyan accents and labels |
+
+Key component classes defined in the stylesheet:
+
+| Class prefix | Component |
+|---|---|
+| `.zw-hero` | Homepage hero section and image carousel |
+| `.zw-service-card` | Service card grid on the homepage |
+| `.zw-services-full` | Full-page service rows on `/servicios` |
+| `.zw-portfolio-card` / `.zw-pf-card` | Portfolio project cards |
+| `.zw-plan-card` | Security plan pricing cards |
+| `.zw-form` / `.zw-form-control` | Bidding request form |
+| `.zw-cta` | Call-to-action banner sections |
+| `.zw-team-card` | Team member cards on `/nosotros` |
+| `.zw-thankyou` | Post-submission thank-you screen |
+| `.btn-zw-primary` / `.btn-zw-outline-white` | Custom button variants |
+| `.animate-fade-up` / `.animate-scale-in` | CSS entrance animations |
+
+---
+
+## JavaScript — `zonaweb_script.js`
+
+**Bundle:** `website.assets_frontend`  
+**Path:** `zonaweb_website/static/src/js/zonaweb_script.js`
+
+Provides all interactive behaviour on the public website. Key responsibilities:
+
+| Feature | Description |
+|---|---|
+| **Hero image carousel** | Cycles through `.zw-carousel-slide` elements; dot buttons allow manual navigation |
+| **Animated counters** | Reads `data-count` attributes on stat numbers and counts up from 0 on scroll into view |
+| **Portfolio filters** | `.zw-filter-btn` buttons toggle `data-filter` attribute matching to show/hide `.zw-pf-card` items |
+| **Scroll-triggered animations** | Uses `IntersectionObserver` (or scroll events) to add `.visible` class to `.animate-fade-up` and `.animate-scale-in` elements |
+
+---
+
+## Image files — `static/src/img/`
+
+All images are stored flat under `static/src/img/`. They are referenced in
+QWeb templates with the path `/zonaweb_website/static/src/img/<filename>`.
+
+| File | Used in |
+|---|---|
+| `hero1.jpg` | Hero carousel slide 1; team card placeholder; portfolio card |
+| `hero2.jpg` | Hero carousel slide 2; team card placeholder |
+| `hero3.jpg` | Hero carousel slide 3; team card placeholder |
+| `about-image.jpg` | Nosotros page — company intro section |
+| `bidding-image.jpg` | Bidding page supplementary image |
+| `contact-image.jpg` | Contact section image |
+| `portfolio1.jpg` | TMS project card (homepage + portfolio page) |
+| `portfolio2.jpg` | Reservas 360 project card |
+| `portfolio3.jpg` | Sistema ERP project card |
+| `service1.jpg` | Software development service (all service contexts) |
+| `service2.jpg` | Network infrastructure service; Cloud migration portfolio card |
+| `service3.jpg` | Technical support service |
+| `service4.jpg` | Information security service; Audit portfolio card |
+| `logo.png` | Site logo (referenced from CSS/layout) |
+| `banner.png` | Module listing banner (`static/description/banner.png` alias) |
+
+<Info>
+  There is no `static/description/` directory in the source tree. The manifest
+  references `static/description/banner.png` and `static/description/theme_preview.png`
+  for the Apps list thumbnail — these files would need to be added separately
+  for the module listing image to display correctly in the Odoo Apps store.
+</Info>

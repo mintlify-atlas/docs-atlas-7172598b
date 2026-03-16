@@ -1,0 +1,183 @@
+---
+title: "JavaScript"
+description: "Client-side interactivity for the Tema Zonaweb theme: hero carousel, scroll-reveal animations, portfolio filtering, animated counters, smooth scroll, and navbar shadow."
+---
+
+# JavaScript
+
+All client-side JavaScript for the theme lives in a single file: `static/src/js/zonaweb_script.js`. It uses the standard `/** @odoo-module **/` pragma and runs entirely inside a `DOMContentLoaded` listener.
+
+## Asset bundle
+
+The script is loaded via the `website.assets_frontend` bundle:
+
+```python
+'assets': {
+    'website.assets_frontend': [
+        'zonaweb_website/static/src/js/zonaweb_script.js',
+    ],
+    ...
+}
+```
+
+<Note>
+This file uses `website.assets_frontend` (not `web.assets_frontend`) because it depends on the website frontend context being available. The `/** @odoo-module **/` pragma registers it as an Odoo ES module.
+</Note>
+
+## Hero carousel
+
+The carousel cycles through the three slides in `.zw-carousel-slide` and syncs the active state of `.zw-carousel-dot` buttons.
+
+```js
+const slides = document.querySelectorAll('.zw-carousel-slide');
+const dots   = document.querySelectorAll('.zw-carousel-dot');
+if (slides.length) {
+    let current = 0;
+    const goTo = (idx) => {
+        slides[current].classList.remove('active');
+        dots[current] && dots[current].classList.remove('active');
+        current = (idx + slides.length) % slides.length;
+        slides[current].classList.add('active');
+        dots[current] && dots[current].classList.add('active');
+    };
+    dots.forEach((dot, i) => dot.addEventListener('click', () => goTo(i)));
+    setInterval(() => goTo(current + 1), 4500);
+}
+```
+
+Key details:
+- Auto-advances every **4500ms**
+- `goTo` wraps around using modulo (`% slides.length`), so it loops indefinitely
+- Dot clicks call `goTo(i)` directly, immediately jumping to any slide
+- The CSS controls visibility: `.zw-carousel-slide` is `display: none`, `.zw-carousel-slide.active` is `display: block`
+
+## Scroll-reveal animations
+
+A single `IntersectionObserver` watches all card elements and reveals them when they enter the viewport:
+
+```js
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+            observer.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.1 });
+
+document.querySelectorAll(
+    '.zw-service-card, .zw-portfolio-card, .zw-pf-card, .zw-plan-card, .zw-team-card'
+).forEach((el, i) => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(24px)';
+    el.style.transition = `opacity 0.5s ease ${i * 0.08}s, transform 0.5s ease ${i * 0.08}s`;
+    observer.observe(el);
+});
+```
+
+Key details:
+- All matching cards start invisible (`opacity: 0`) and offset down 24px
+- Each card gets a staggered delay of `i * 0.08s` (e.g., card 0 = 0ms, card 5 = 400ms)
+- The observer fires at **10% visibility** (`threshold: 0.1`)
+- `observer.unobserve(el)` ensures the animation only plays once per element
+
+## Portfolio filtering
+
+Client-side filtering by category without any page reload:
+
+```js
+const filterBtns = document.querySelectorAll('.zw-filter-btn');
+const pfCards    = document.querySelectorAll('.zw-pf-card[data-cat]');
+filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const cat = btn.dataset.filter;
+        pfCards.forEach(card => {
+            const show = cat === 'all' || card.dataset.cat === cat;
+            card.style.display = show ? 'block' : 'none';
+        });
+    });
+});
+```
+
+Key details:
+- Filter buttons carry a `data-filter` attribute (`all`, `software`, `app`, `infra`, `security`)
+- Portfolio cards carry a `data-cat` attribute matching one of those values
+- Only one filter is active at a time — all `active` classes are removed before adding to the clicked button
+- Cards are shown/hidden via `display: block` / `display: none`
+
+## Animated counters
+
+A second `IntersectionObserver` (separate from the scroll-reveal one) watches elements with `data-count` attributes and runs a counting animation when they scroll into view:
+
+```js
+const counters = document.querySelectorAll('[data-count]');
+const countObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const el  = entry.target;
+            const end = parseInt(el.dataset.count, 10);
+            const duration = 1800;
+            const step = Math.ceil(end / (duration / 16));
+            let current = 0;
+            const timer = setInterval(() => {
+                current = Math.min(current + step, end);
+                el.textContent = current;
+                if (current >= end) clearInterval(timer);
+            }, 16);  // ~60fps
+            countObserver.unobserve(el);
+        }
+    });
+}, { threshold: 0.5 });
+counters.forEach(c => countObserver.observe(c));
+```
+
+Key details:
+- The observer fires at **50% visibility** (`threshold: 0.5`) — the counter only starts when the element is well into view
+- Duration is **1800ms** (~60 frames of 16ms each)
+- Step size is `Math.ceil(end / (duration / 16))` — ensures the counter always reaches the target exactly
+- `clearInterval` stops the timer once the final value is reached
+- Used on the homepage hero stats and the about page stats band (both use `data-count` attributes on `<span>` elements)
+
+## Smooth scroll
+
+Anchor links targeting same-page IDs scroll smoothly instead of jumping:
+
+```js
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', (e) => {
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) {
+            e.preventDefault();
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    });
+});
+```
+
+Key details:
+- Only fires if a target element is actually found in the DOM
+- Uses the native `scrollIntoView` API with `behavior: 'smooth'`
+- `e.preventDefault()` prevents the default anchor jump only when the target exists
+
+## Navbar scroll shadow
+
+Adds a subtle shadow to the navbar when the page is scrolled more than 20px:
+
+```js
+const navbar = document.querySelector('.o_main_navbar, nav.navbar');
+if (navbar) {
+    window.addEventListener('scroll', () => {
+        navbar.style.boxShadow = window.scrollY > 20
+            ? '0 4px 20px rgba(11,31,58,0.15)'
+            : '';
+    }, { passive: true });
+}
+```
+
+Key details:
+- Targets both `.o_main_navbar` (Odoo's standard navbar class) and `nav.navbar` (Bootstrap fallback)
+- The `{ passive: true }` option on the scroll listener signals to the browser that `preventDefault()` will never be called, enabling scroll performance optimizations
+- Shadow is removed (empty string) when scrolled back to the top

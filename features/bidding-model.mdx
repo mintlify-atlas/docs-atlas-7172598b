@@ -1,0 +1,155 @@
+---
+title: "Bidding request data model"
+description: "Complete field reference for the zonaweb.bidding.request Odoo model."
+---
+
+# Bidding request data model
+
+The `zonaweb.bidding.request` model stores all submitted project proposals and their workflow state.
+
+## Model metadata
+
+| Property | Value |
+|---|---|
+| `_name` | `zonaweb.bidding.request` |
+| `_description` | Solicitud de Licitación Zonaweb |
+| `_inherit` | `['mail.thread', 'mail.activity.mixin']` |
+| `_order` | `create_date desc` (newest first) |
+
+The model inherits `mail.thread` and `mail.activity.mixin`, enabling the Odoo chatter panel, message logging, and scheduled activity support in backend views.
+
+## Fields
+
+### Identity fields
+
+<ParamField path="name" type="Char">
+  Auto-generated reference number in the format `BID/XXXXX` (e.g., `BID/00001`). Set to `readonly=True` after creation. The default value is the translated string `'Nuevo'` until the `create` override assigns the real sequence value. `copy=False` ensures duplicated records get a new sequence number.
+</ParamField>
+
+<ParamField path="company_id" type="Many2one (res.company)">
+  The Odoo company associated with this request. Defaults to `self.env.company` (the currently active company).
+</ParamField>
+
+### Contact information
+
+<ParamField path="company_name" type="Char" required>
+  Legal name of the requesting company. Changes are tracked in the chatter (`tracking=True`).
+</ParamField>
+
+<ParamField path="contact_name" type="Char" required>
+  Full name of the primary contact person. Changes tracked.
+</ParamField>
+
+<ParamField path="email" type="Char" required>
+  Email address of the contact. Used for the confirmation email. Changes tracked.
+</ParamField>
+
+<ParamField path="phone" type="Char">
+  Phone number of the contact (optional). Not tracked.
+</ParamField>
+
+### Service details
+
+<ParamField path="service_type" type="Selection" required>
+  The type of service being requested.
+
+  | Value | Display label |
+  |---|---|
+  | `software` | Desarrollo de Software |
+  | `infrastructure` | Infraestructura de Redes |
+  | `support` | Soporte Técnico |
+  | `security` | Seguridad Informática |
+  | `consulting` | Consultoría |
+  | `other` | Otro |
+</ParamField>
+
+<ParamField path="project_description" type="Text" required>
+  Detailed description of the project or service needed.
+</ParamField>
+
+<ParamField path="specific_requirements" type="Text">
+  Optional additional technical or functional requirements.
+</ParamField>
+
+<ParamField path="estimated_budget" type="Float">
+  Estimated project budget. Stored as a float. Defaults to `0.0` if not provided by the controller.
+</ParamField>
+
+<ParamField path="estimated_timeline" type="Selection">
+  Preferred delivery timeline.
+
+  | Value | Display label |
+  |---|---|
+  | `normal` | Normal (2-4 semanas) |
+  | `urgent` | Urgente (1-2 semanas) |
+  | `flexible` | Flexible (1-3 meses) |
+</ParamField>
+
+<ParamField path="company_sector" type="Selection">
+  Industry sector of the requesting company.
+
+  | Value | Display label |
+  |---|---|
+  | `retail` | Retail |
+  | `manufacturing` | Manufactura |
+  | `services` | Servicios |
+  | `technology` | Tecnología |
+  | `healthcare` | Salud |
+  | `education` | Educación |
+  | `finance` | Finanzas |
+  | `other` | Otro |
+</ParamField>
+
+### Workflow state
+
+<ParamField path="state" type="Selection">
+  Current workflow state of the bidding request. Default: `draft`. Changes tracked in chatter.
+
+  | Value | Display label | Meaning |
+  |---|---|---|
+  | `draft` | Borrador | Newly submitted, awaiting review |
+  | `confirmed` | Confirmado | Acknowledged by internal team |
+  | `approved` | Aprobado | Proposal accepted |
+  | `rejected` | Rechazado | Proposal declined |
+</ParamField>
+
+## Sequence
+
+Bidding reference numbers are assigned by an Odoo sequence defined in `data/website_data.xml`:
+
+```xml
+<record id="seq_zonaweb_bidding_request" model="ir.sequence">
+    <field name="name">Secuencia de Solicitudes de Licitación</field>
+    <field name="code">zonaweb.bidding.request</field>
+    <field name="prefix">BID/</field>
+    <field name="padding">5</field>
+    <field name="company_id" eval="False"/>
+</record>
+```
+
+`company_id = False` means the sequence is global (shared across all Odoo companies in the database).
+
+The sequence is called in the `create` override:
+
+```python
+@api.model_create_multi
+def create(self, vals_list):
+    for vals in vals_list:
+        if vals.get('name', _('Nuevo')) == _('Nuevo'):
+            vals['name'] = self.env['ir.sequence'].next_by_code(
+                'zonaweb.bidding.request'
+            )
+    return super().create(vals_list)
+```
+
+## Access rights
+
+| Access record | Group | Read | Write | Create | Delete |
+|---|---|---|---|---|---|
+| `access_zonaweb_bidding_request_public` | Public | — | — | ✓ | — |
+| `access_zonaweb_bidding_request_user` | Internal User | ✓ | ✓ | ✓ | — |
+| `access_zonaweb_bidding_request_manager` | Administrator | ✓ | ✓ | ✓ | ✓ |
+
+<Note>
+Public users can only create records (submit the form). They cannot read, modify, or delete records. Internal users can manage records but cannot delete them. Only system administrators have full CRUD access.
+</Note>

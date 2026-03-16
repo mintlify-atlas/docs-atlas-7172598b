@@ -1,0 +1,86 @@
+---
+title: "Email confirmation"
+description: "Automatic confirmation emails sent to bidding request submitters using the Odoo mail template system."
+---
+
+# Email confirmation
+
+When a visitor submits the bidding form at `/licencias`, the system automatically sends a confirmation email using an Odoo mail template.
+
+## Template details
+
+| Field | Value |
+|---|---|
+| Template ID | `zonaweb_website.email_template_bidding_confirmation` |
+| Model | `zonaweb.bidding.request` |
+| Subject | `Confirmación de Solicitud de Licitación - ${object.name}` |
+| From | `${object.env.company.email or 'noreply@zonaweb.com'}` |
+| To | `${object.email}` (the submitter's email) |
+
+## Email body
+
+The email body is defined in `data/website_data.xml` as an HTML fragment:
+
+```html
+<p>Estimado/a ${object.contact_name},</p>
+<p>Gracias por tu interés en los servicios de Zonaweb.
+   Hemos recibido tu solicitud con los siguientes detalles:</p>
+<ul>
+    <li><strong>Número de referencia:</strong> ${object.name}</li>
+    <li><strong>Empresa:</strong> ${object.company_name}</li>
+    <li><strong>Tipo de servicio:</strong> ${object.service_type}</li>
+</ul>
+<p>Nuestro equipo te contactará en menos de 24 horas
+   con una propuesta detallada.</p>
+<p>Atentamente,<br/>El equipo de Zonaweb</p>
+```
+
+The `${object.*}` placeholders are resolved by Odoo's Jinja2-based template engine at send time.
+
+## When the email is sent
+
+The confirmation email is triggered in the `submit_bidding` controller immediately after the record is created:
+
+```python
+try:
+    template = request.env.ref(
+        'zonaweb_website.email_template_bidding_confirmation'
+    )
+    template.sudo().send_mail(bidding_request.id, force_send=True)
+except Exception as mail_error:
+    _logger.warning("No se pudo enviar email: %s", mail_error)
+```
+
+Key behaviors:
+- `force_send=True` sends the email immediately rather than queuing it in the mail queue
+- `sudo()` is used to bypass access right restrictions for the public user context
+- If sending fails for any reason (SMTP not configured, invalid email, etc.), the exception is caught and logged as a **warning** — the bidding record is still created and the thank-you page is still shown
+
+<Warning>
+Email delivery requires a configured outgoing mail server in your Odoo instance (**Settings → Technical → Email → Outgoing Mail Servers**). If no server is configured, the email will silently fail but the bidding record will still be created.
+</Warning>
+
+## Template data
+
+The template is defined in `data/website_data.xml` inside a `<data noupdate="1">` block:
+
+```xml
+<record id="email_template_bidding_confirmation" model="mail.template">
+    <field name="name">Confirmación de Solicitud de Licitación</field>
+    <field name="model_id" ref="model_zonaweb_bidding_request"/>
+    <field name="subject">
+        Confirmación de Solicitud de Licitación - ${object.name}
+    </field>
+    <field name="email_from">
+        ${object.env.company.email or 'noreply@zonaweb.com'}
+    </field>
+    <field name="email_to">${object.email}</field>
+    <field name="body_html" type="html">
+        <!-- HTML body -->
+    </field>
+</record>
+```
+
+<Tip>
+You can customize the email template directly in the Odoo backend under **Settings → Technical → Email → Templates** without modifying the module source files. Changes made there will persist because `noupdate="1"` prevents the record from being overwritten on module upgrades.
+</Tip>

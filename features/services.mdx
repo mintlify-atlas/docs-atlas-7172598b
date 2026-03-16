@@ -1,0 +1,95 @@
+---
+title: "Services page"
+description: "Detailed descriptions of all four IT services offered by Zonaweb at /servicios."
+---
+
+# Services page
+
+**URL:** `/servicios`  
+**Template:** `zonaweb_website.servicios_page`  
+**Auth:** Public
+
+The services page provides in-depth descriptions of all four core services with benefit lists, technology tags, and direct links to the bidding form.
+
+## Services
+
+### 1. Software Development
+
+Custom applications and systems optimized for business processes.
+
+**Benefits:**
+- Process optimization and productivity increase
+- Integration with existing systems
+- Scalability for growth
+- Continuous technical support and updates
+
+**Technology stack:**
+
+<CardGroup cols={2}>
+  <Card title="Blue tags" icon="code">
+    Python, JavaScript, React, Node.js
+  </Card>
+  <Card title="Grey tags" icon="server">
+    Java, .NET, SQL
+  </Card>
+</CardGroup>
+
+---
+
+### 2. Network Infrastructure
+
+Design, implementation, and maintenance of robust, scalable network infrastructures.
+
+**Benefits:**
+- Improved network performance and stability
+- Advanced protection against external threats
+- Bandwidth optimization
+- Scalability for future expansion
+
+**Technology stack:** Cisco, VMware, AWS (blue tags) — Firewall, VPN, SD-WAN (grey tags)
+
+---
+
+### 3. Technical Support
+
+Comprehensive technical support for system maintenance and incident response.
+
+**Pricing:** From $500/month (button text: "Desde $500/mes")
+
+**Benefits:**
+- Fast incident response
+- 24/7 availability for emergencies
+- Preventive maintenance
+- Internal team training
+
+**Delivery modes:** Remote (Remoto), On-site (Presencial) — blue tags; Preventive (Preventivo), Training (Capacitación) — grey tags
+
+---
+
+### 4. IT Security
+
+Comprehensive digital asset protection with next-generation security solutions.
+
+**Pricing:** From $800/month (button text: "Desde $800/mes")
+
+**Benefits:**
+- Protection against malware and ransomware
+- Compliance with security regulations
+- Incident response
+- Periodic security audits
+
+**Technology stack:** Antivirus, Firewall, VPN (blue tags) — Cifrado, Backup (grey tags)
+
+<Info>
+Services 1 and 2 link to `/licencias` with the label "Solicitar cotización". Services 3 and 4 also link to `/licencias` but their button text displays the starting price.
+</Info>
+
+## Page layout
+
+Each service uses an alternating row layout defined by `.zw-service-row`:
+- **Odd rows (1, 3):** image left, text right — standard `.zw-service-row`
+- **Even rows (2, 4):** text left, image right — `.zw-service-row.zw-service-row--reverse` (achieved via `direction: rtl` on the row)
+
+On screens ≤1024px, the `.zw-service-row--reverse` direction override is removed and all rows stack to a single column.
+
+The page ends with a CTA banner: "¿No encuentras lo que buscas?" linking to `/licencias`.

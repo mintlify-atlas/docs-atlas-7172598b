@@ -1,0 +1,274 @@
+---
+title: "HTTP routes"
+description: "All HTTP routes registered by the ZonawebWebsite controller."
+---
+
+All routes are registered by the `ZonawebWebsite` controller in `controllers/main.py`. Public routes require no authentication. POST endpoints that accept form data require a valid CSRF token.
+
+## Route summary
+
+| Method | Path | Auth | Type | Description |
+|--------|------|------|------|-------------|
+| GET | `/servicios` | public | http | Renders the services page |
+| GET | `/portafolio` | public | http | Renders the portfolio page |
+| GET | `/nosotros` | public | http | Renders the about page |
+| GET | `/licencias` | public | http | Renders the bidding form page |
+| POST | `/submit-bidding` | public | http | Submits a new bidding request |
+| POST | `/api/bidding-status` | public | json | Returns the status of a bidding request |
+
+---
+
+## GET /servicios
+
+Renders the services page.
+
+- **Auth:** public
+- **Type:** http (website=True)
+- **Template:** `zonaweb_website.servicios_page`
+
+---
+
+## GET /portafolio
+
+Renders the portfolio page.
+
+- **Auth:** public
+- **Type:** http (website=True)
+- **Template:** `zonaweb_website.portafolio_page`
+
+---
+
+## GET /nosotros
+
+Renders the about page.
+
+- **Auth:** public
+- **Type:** http (website=True)
+- **Template:** `zonaweb_website.nosotros_page`
+
+---
+
+## GET /licencias
+
+Renders the bidding request form page.
+
+- **Auth:** public
+- **Type:** http (website=True)
+- **Template:** `zonaweb_website.bidding_page`
+
+---
+
+## POST /submit-bidding
+
+Creates a new `zonaweb.bidding.request` record from a form submission. On success, sends a confirmation email to the provided address and renders a thank-you page. On error, renders the standard website error page.
+
+- **Auth:** public
+- **Type:** http (website=True)
+- **CSRF:** required
+- **Content-Type:** `application/x-www-form-urlencoded`
+
+### Request parameters
+
+<ParamField body="company_name" type="string" required>
+  Legal name of the requesting company.
+</ParamField>
+
+<ParamField body="contact_name" type="string" required>
+  Full name of the person submitting the request.
+</ParamField>
+
+<ParamField body="email" type="string" required>
+  Contact email address. A confirmation email is sent to this address.
+</ParamField>
+
+<ParamField body="phone" type="string">
+  Contact phone number. Optional.
+</ParamField>
+
+<ParamField body="service_type" type="string" required>
+  Type of service requested. Accepted values:
+
+  - `software` — Desarrollo de Software
+  - `infrastructure` — Infraestructura de Redes
+  - `support` — Soporte Técnico
+  - `security` — Seguridad Informática
+  - `consulting` — Consultoría
+  - `other` — Otro
+</ParamField>
+
+<ParamField body="project_description" type="string" required>
+  Free-text description of the project scope and goals.
+</ParamField>
+
+<ParamField body="estimated_budget" type="number">
+  Estimated budget in the company's local currency. Converted to `float` internally. Defaults to `0.0` if omitted.
+</ParamField>
+
+<ParamField body="estimated_timeline" type="string">
+  Preferred delivery timeline. Accepted values:
+
+  - `normal` — Normal (2–4 semanas)
+  - `urgent` — Urgente (1–2 semanas)
+  - `flexible` — Flexible (1–3 meses)
+</ParamField>
+
+<ParamField body="company_sector" type="string">
+  Industry sector of the requesting company. Accepted values:
+
+  - `retail` — Retail
+  - `manufacturing` — Manufactura
+  - `services` — Servicios
+  - `technology` — Tecnología
+  - `healthcare` — Salud
+  - `education` — Educación
+  - `finance` — Finanzas
+  - `other` — Otro
+</ParamField>
+
+<ParamField body="specific_requirements" type="string">
+  Any additional or specific technical requirements. Optional.
+</ParamField>
+
+### Responses
+
+**Success (200):** Renders `zonaweb_website.bidding_thankyou` with the generated reference number available as `bidding_id` in the template context (e.g. `BID/00001`).
+
+**Error (200):** Renders `website.http_error` with the following message:
+
+```
+Error al procesar tu solicitud. Por favor, inténtalo de nuevo.
+```
+
+<Warning>
+  The error path also returns HTTP 200 because Odoo's `website.http_error` template is rendered as a normal page response. Check the rendered content to detect failures.
+</Warning>
+
+### Example
+
+```bash
+curl -X POST https://example.com/submit-bidding \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "csrf_token=<TOKEN>" \
+  -d "company_name=Acme+Corp" \
+  -d "contact_name=Jane+Doe" \
+  -d "email=jane@acme.com" \
+  -d "phone=%2B57+310+000+0000" \
+  -d "service_type=software" \
+  -d "project_description=ERP+migration+project" \
+  -d "estimated_budget=15000" \
+  -d "estimated_timeline=normal" \
+  -d "company_sector=technology"
+```
+
+---
+
+## POST /api/bidding-status
+
+Returns the current state and last update timestamp for a bidding request identified by its reference number.
+
+- **Auth:** public
+- **Type:** json
+- **CSRF:** not required
+- **Content-Type:** `application/json`
+
+<Note>
+  This is a JSON-RPC endpoint (Odoo `type='json'`). The request body must follow the JSON-RPC 2.0 envelope format. The parameters documented below are the fields inside the `params` object.
+</Note>
+
+### Request body
+
+<ParamField body="bidding_id" type="string" required>
+  The reference number of the bidding request, as returned by `/submit-bidding` (e.g. `BID/00001`).
+</ParamField>
+
+### Response fields
+
+**Success:**
+
+<ResponseField name="status" type="string">
+  Current state of the bidding request. One of:
+
+  - `draft` — Borrador (initial state)
+  - `confirmed` — Confirmado
+  - `approved` — Aprobado
+  - `rejected` — Rechazado
+</ResponseField>
+
+<ResponseField name="last_update" type="string">
+  ISO-like timestamp of the last modification, formatted as `YYYY-MM-DD HH:MM:SS`.
+</ResponseField>
+
+**Error — missing ID:**
+
+<ResponseField name="error" type="string">
+  Fixed value: `"Se requiere ID de licitación"`
+</ResponseField>
+
+**Error — not found:**
+
+<ResponseField name="error" type="string">
+  Fixed value: `"Licitación no encontrada"`
+</ResponseField>
+
+### Examples
+
+<CodeGroup>
+
+```bash Success
+curl -X POST https://example.com/api/bidding-status \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": {
+      "bidding_id": "BID/00001"
+    }
+  }'
+```
+
+```bash Missing ID
+curl -X POST https://example.com/api/bidding-status \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "call",
+    "params": {}
+  }'
+```
+
+</CodeGroup>
+
+<CodeGroup>
+
+```json Success response
+{
+  "jsonrpc": "2.0",
+  "id": null,
+  "result": {
+    "status": "confirmed",
+    "last_update": "2026-03-16 14:23:05"
+  }
+}
+```
+
+```json Error — missing ID
+{
+  "jsonrpc": "2.0",
+  "id": null,
+  "result": {
+    "error": "Se requiere ID de licitación"
+  }
+}
+```
+
+```json Error — not found
+{
+  "jsonrpc": "2.0",
+  "id": null,
+  "result": {
+    "error": "Licitación no encontrada"
+  }
+}
+```
+
+</CodeGroup>

@@ -1,0 +1,259 @@
+---
+title: "Bidding request model"
+description: "Complete reference for the zonaweb.bidding.request Odoo model."
+---
+
+The `zonaweb.bidding.request` model stores service-bidding requests submitted through the website. It inherits from `mail.thread` and `mail.activity.mixin`, giving every record a full message log and activity scheduling out of the box.
+
+## Model metadata
+
+| Property | Value |
+|----------|-------|
+| `_name` | `zonaweb.bidding.request` |
+| `_description` | `Solicitud de Licitación Zonaweb` |
+| `_inherit` | `['mail.thread', 'mail.activity.mixin']` |
+| `_order` | `create_date desc` |
+
+---
+
+## Fields
+
+### Identity
+
+<ParamField body="name" type="Char">
+  Auto-generated reference number (e.g. `BID/00001`). Set by the `ir.sequence` with code `zonaweb.bidding.request` on record creation. Read-only after creation; defaults to the string `"Nuevo"` until saved.
+</ParamField>
+
+<ParamField body="company_id" type="Many2one → res.company">
+  Company that owns the record. Defaults to the current user's company (`self.env.company`).
+</ParamField>
+
+### Contact information
+
+<ParamField body="company_name" type="Char" required>
+  Legal name of the requesting company. Changes are tracked in the chatter.
+</ParamField>
+
+<ParamField body="contact_name" type="Char" required>
+  Full name of the person submitting the request. Changes are tracked in the chatter.
+</ParamField>
+
+<ParamField body="email" type="Char" required>
+  Contact email address. Used as the recipient for the confirmation email template. Changes are tracked in the chatter.
+</ParamField>
+
+<ParamField body="phone" type="Char">
+  Contact phone number. Optional.
+</ParamField>
+
+### Service details
+
+<ParamField body="service_type" type="Selection" required>
+  Type of service being requested.
+
+  | Value | Label |
+  |-------|-------|
+  | `software` | Desarrollo de Software |
+  | `infrastructure` | Infraestructura de Redes |
+  | `support` | Soporte Técnico |
+  | `security` | Seguridad Informática |
+  | `consulting` | Consultoría |
+  | `other` | Otro |
+</ParamField>
+
+<ParamField body="project_description" type="Text" required>
+  Free-text description of the project scope and goals.
+</ParamField>
+
+<ParamField body="specific_requirements" type="Text">
+  Any additional technical or functional requirements. Optional.
+</ParamField>
+
+<ParamField body="estimated_budget" type="Float">
+  Estimated project budget. Optional; defaults to `0.0` when submitted via the website form.
+</ParamField>
+
+<ParamField body="estimated_timeline" type="Selection">
+  Preferred delivery timeline.
+
+  | Value | Label |
+  |-------|-------|
+  | `normal` | Normal (2–4 semanas) |
+  | `urgent` | Urgente (1–2 semanas) |
+  | `flexible` | Flexible (1–3 meses) |
+</ParamField>
+
+<ParamField body="company_sector" type="Selection">
+  Industry sector of the requesting company.
+
+  | Value | Label |
+  |-------|-------|
+  | `retail` | Retail |
+  | `manufacturing` | Manufactura |
+  | `services` | Servicios |
+  | `technology` | Tecnología |
+  | `healthcare` | Salud |
+  | `education` | Educación |
+  | `finance` | Finanzas |
+  | `other` | Otro |
+</ParamField>
+
+### State
+
+<ParamField body="state" type="Selection" default="draft">
+  Lifecycle state of the request. Changes are tracked in the chatter.
+
+  | Value | Label | Description |
+  |-------|-------|-------------|
+  | `draft` | Borrador | Initial state after form submission |
+  | `confirmed` | Confirmado | Internally acknowledged |
+  | `approved` | Aprobado | Request accepted |
+  | `rejected` | Rechazado | Request declined |
+</ParamField>
+
+---
+
+## Methods
+
+### `create(vals_list)`
+
+Overrides the standard `create` method (decorated with `@api.model_create_multi`). Before delegating to the ORM, it assigns the next value from the `zonaweb.bidding.request` sequence to any record whose `name` has not already been set.
+
+```python
+@api.model_create_multi
+def create(self, vals_list):
+    for vals in vals_list:
+        if vals.get('name', _('Nuevo')) == _('Nuevo'):
+            vals['name'] = self.env['ir.sequence'].next_by_code('zonaweb.bidding.request')
+    return super().create(vals_list)
+```
+
+### `action_confirm()`
+
+Transitions the record to `confirmed`. Intended to be called from a button in the Odoo backend view.
+
+```python
+def action_confirm(self):
+    self.write({'state': 'confirmed'})
+    return True
+```
+
+### `action_approve()`
+
+Transitions the record to `approved`.
+
+```python
+def action_approve(self):
+    self.write({'state': 'approved'})
+    return True
+```
+
+### `action_reject()`
+
+Transitions the record to `rejected`.
+
+```python
+def action_reject(self):
+    self.write({'state': 'rejected'})
+    return True
+```
+
+---
+
+## Sequence
+
+Defined in `data/website_data.xml` with `noupdate="1"` so it is created only on first installation and never overwritten by module updates.
+
+| Property | Value |
+|----------|-------|
+| Code | `zonaweb.bidding.request` |
+| Prefix | `BID/` |
+| Padding | 5 digits |
+| Example values | `BID/00001`, `BID/00042`, `BID/10000` |
+
+```xml
+<record id="seq_zonaweb_bidding_request" model="ir.sequence">
+    <field name="name">Secuencia de Solicitudes de Licitación</field>
+    <field name="code">zonaweb.bidding.request</field>
+    <field name="prefix">BID/</field>
+    <field name="padding">5</field>
+    <field name="company_id" eval="False"/>
+</record>
+```
+
+<Note>
+  `company_id` is set to `False` in the sequence definition, making it a shared global sequence across all companies.
+</Note>
+
+---
+
+## Access rights
+
+Defined in `security/ir.model.access.csv`.
+
+| Group | Read | Write | Create | Delete |
+|-------|------|-------|--------|--------|
+| `base.group_public` (Public) | — | — | Yes | — |
+| `base.group_user` (Internal user) | Yes | Yes | Yes | — |
+| `base.group_system` (Administrator) | Yes | Yes | Yes | Yes |
+
+<Info>
+  Public users can only create records. This is the minimum permission required for the website form at `/licencias` to work without authentication. Internal users can read and update records but cannot delete them; only administrators have full CRUD access.
+</Info>
+
+---
+
+## Code examples
+
+### Create a record programmatically
+
+```python
+bidding = env['zonaweb.bidding.request'].create({
+    'company_name': 'Acme Corp',
+    'contact_name': 'Jane Doe',
+    'email': 'jane@acme.com',
+    'phone': '+57 310 000 0000',
+    'service_type': 'software',
+    'project_description': 'Migrate legacy ERP to modern stack.',
+    'estimated_budget': 15000.0,
+    'estimated_timeline': 'normal',
+    'company_sector': 'technology',
+    'specific_requirements': 'Must integrate with existing SAP instance.',
+})
+# bidding.name => 'BID/00001'
+# bidding.state => 'draft'
+```
+
+### Transition through states
+
+```python
+# Confirm the request
+bidding.action_confirm()
+# bidding.state => 'confirmed'
+
+# Approve it
+bidding.action_approve()
+# bidding.state => 'approved'
+
+# Or reject it instead
+bidding.action_reject()
+# bidding.state => 'rejected'
+```
+
+### Check status via the JSON endpoint
+
+```python
+import requests
+
+response = requests.post(
+    'https://example.com/api/bidding-status',
+    json={
+        'jsonrpc': '2.0',
+        'method': 'call',
+        'params': {'bidding_id': 'BID/00001'},
+    },
+)
+result = response.json().get('result', {})
+print(result['status'])       # e.g. 'approved'
+print(result['last_update'])  # e.g. '2026-03-16 14:23:05'
+```

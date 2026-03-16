@@ -1,80 +1,110 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Install Tema Zonaweb on your Odoo 18 instance and launch your corporate website."
 ---
 
-## Get started in three steps
+# Quickstart
 
-Get your documentation site running locally and make your first customization.
+Get Tema Zonaweb running on your Odoo 18 instance in under 10 minutes.
 
-### Step 1: Set up your local environment
+## Prerequisites
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+- Odoo 18.0 instance (Community or Enterprise)
+- Administrator access to the Odoo backend
+- The following Odoo apps already installed: **Website**, **eCommerce**, **Discuss** (`mail`), **Sales**
 
-### Step 2: Deploy your changes
+## Installation
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+<Steps>
+  <Step title="Copy the module to your addons path">
+    Clone or copy the `zonaweb_website` directory into any folder listed in your Odoo `addons_path`.
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+    ```bash
+    # Example: placing it alongside other custom modules
+    cp -r zonaweb_website /opt/odoo/custom-addons/
+    ```
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+    Then confirm your `odoo.conf` includes this path:
 
-### Step 3: Go live
+    ```ini odoo.conf
+    addons_path = /opt/odoo/odoo/addons,/opt/odoo/custom-addons
+    ```
+  </Step>
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+  <Step title="Restart the Odoo server">
+    Restart the Odoo service so it picks up the new module:
+
+    ```bash
+    sudo systemctl restart odoo
+    # or, if running manually:
+    python odoo-bin -c /etc/odoo/odoo.conf
+    ```
+  </Step>
+
+  <Step title="Update the apps list">
+    In the Odoo backend, go to **Settings → Activate developer mode**, then navigate to **Apps → Update Apps List**. Confirm when prompted.
+  </Step>
+
+  <Step title="Install the module">
+    Search for **Tema Zonaweb** in the Apps list and click **Install**.
+
+    <Note>
+      Odoo will automatically install the required dependencies (`website`, `website_sale`, `mail`, `sale_management`) if they are not already active.
+    </Note>
+  </Step>
+
+  <Step title="Visit your website">
+    Navigate to **Website** in the top menu, then click **Go to Website**. You should now see the Zonaweb corporate homepage with hero carousel, services section, and portfolio preview.
+  </Step>
+</Steps>
+
+## Verify the installation
+
+After installation, these URLs should all respond with styled pages:
+
+| URL | Page |
+|---|---|
+| `/` | Homepage with hero, services, portfolio, pricing, testimonials |
+| `/servicios` | Full services catalog |
+| `/portafolio` | Filterable project portfolio |
+| `/nosotros` | About / team page |
+| `/licencias` | Bidding request form |
+
+## Submit your first bidding request
+
+To verify the bidding system works end-to-end:
+
+<Steps>
+  <Step title="Open the bidding form">
+    Go to `/licencias` on your website. You will see a form asking for company name, contact details, service type, project description, budget, and timeline.
+  </Step>
+
+  <Step title="Fill in the form and submit">
+    Complete all required fields and click **Submit**. The form posts to `/submit-bidding` with CSRF protection enabled.
+  </Step>
+
+  <Step title="Check the confirmation page">
+    You should be redirected to a thank-you page showing your bidding reference number (e.g., `BID/00001`).
+  </Step>
+
+  <Step title="Review the record in the backend">
+    In the Odoo backend, navigate to **Website → Bidding Requests** (or search for `zonaweb.bidding.request` in debug mode) to see the new record in `draft` state.
+  </Step>
+</Steps>
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
-
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Customize brand colors" icon="palette" href="/features/theme-colors">
+    Override CSS variables to match your own brand
+  </Card>
+  <Card title="Understand the bidding workflow" icon="diagram-project" href="/features/bidding-workflow">
+    Learn how requests move from draft to approved
+  </Card>
+  <Card title="Explore all website pages" icon="browser" href="/features/homepage">
+    See what content is available on each page
+  </Card>
+  <Card title="API reference" icon="code" href="/api/routes">
+    HTTP routes and JSON endpoints
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

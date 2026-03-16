@@ -1,0 +1,76 @@
+---
+title: "About page"
+description: "Company history, values, statistics, and team profiles at /nosotros."
+---
+
+# About page
+
+**URL:** `/nosotros`  
+**Template:** `zonaweb_website.nosotros_page`  
+**Auth:** Public
+
+The about page presents Zonaweb's company story, values, KPI metrics, and team profiles.
+
+## Page sections
+
+### Hero
+- Label: "Sobre Nosotros" (rendered in cyan via `color:var(--cyan)`)
+- Headline: "Más de 10 años impulsando la transformación digital"
+- Subheading: "Somos un equipo de profesionales apasionados por la tecnología, comprometidos con el crecimiento de nuestros clientes."
+
+### Company introduction
+
+A two-column grid (`.zw-about-intro__grid`) with an image on the left and text on the right:
+
+- The image has a floating stat card (`.zw-about-intro__stat`) positioned at bottom-right showing **2013** as the founding year
+- **Mission:** Democratize access to high-quality technology solutions
+- **Approach:** Combine technical expertise with business knowledge
+
+#### Company values
+
+Values are displayed in a 2×2 grid (`.zw-about-values`), each with a left blue border:
+
+| Value | Description |
+|---|---|
+| Innovación constante | Adoptamos las últimas tecnologías para ofrecer soluciones de vanguardia. |
+| Compromiso total | Cada proyecto es tratado con la misma dedicación y profesionalismo. |
+| Transparencia | Comunicación clara y honesta en cada etapa del proyecto. |
+| Resultados medibles | Nos enfocamos en métricas concretas que impactan tu negocio. |
+
+### Statistics band
+
+The `.zw-stats-band` section uses a dark navy background and shows animated counters (using `data-count` attributes, triggered by the intersection observer in the JS). The grid collapses from 4 columns to 2 columns at ≤1024px:
+
+| Metric | Value |
+|---|---|
+| Años de experiencia | 10+ |
+| Proyectos completados | 120+ |
+| Clientes activos | 85+ |
+| Satisfacción del cliente | 98% |
+
+### Team members
+
+<CardGroup cols={2}>
+  <Card title="Carlos Rodríguez" icon="user-tie">
+    **Role:** Director General  
+    15 años de experiencia en gestión de proyectos tecnológicos y transformación digital.
+  </Card>
+  <Card title="Ana Martínez" icon="microchip">
+    **Role:** CTO  
+    Especialista en arquitectura de software y soluciones cloud con certificaciones AWS y Azure.
+  </Card>
+  <Card title="Miguel López" icon="shield">
+    **Role:** Jefe de Seguridad  
+    Experto en ciberseguridad con certificaciones CISSP y CEH.
+  </Card>
+  <Card title="Laura García" icon="code">
+    **Role:** Lead Developer  
+    Full-stack developer con especialización en React, Python y sistemas distribuidos.
+  </Card>
+</CardGroup>
+
+Team cards (`.zw-team-card`) are displayed in an auto-fill grid with a minimum card width of 240px, collapsing to 2 columns on mobile and 1 column on small screens.
+
+### CTA
+
+The page ends with "¿Quieres unirte a nuestro equipo?" — an invitation to join the team, linking to `/contactus` (the standard Odoo contact form).

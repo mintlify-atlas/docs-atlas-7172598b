@@ -1,0 +1,159 @@
+---
+title: "CSS components"
+description: "BEM-structured CSS component classes used in the Tema Zonaweb theme."
+---
+
+# CSS components
+
+The theme stylesheet (`static/src/css/zonaweb_style.css`) uses a BEM-inspired naming convention with the `zw-` prefix for all custom components.
+
+## Naming convention
+
+```
+.zw-[component]__[element]--[modifier]
+```
+
+- `zw-` — Zonaweb namespace prefix (prevents collision with Odoo/Bootstrap classes)
+- `[component]` — the block (e.g., `hero`, `service-card`, `plan-card`)
+- `__[element]` — a child element (e.g., `__title`, `__icon`, `__img`)
+- `--[modifier]` — a variant (e.g., `--featured`, `--reverse`, `--white`)
+
+## Asset bundle
+
+The CSS is loaded via the `web.assets_frontend` bundle:
+
+```python
+'assets': {
+    'web.assets_frontend': [
+        'zonaweb_website/static/src/css/zonaweb_style.css',
+    ],
+    ...
+}
+```
+
+<Info>
+The CSS goes in `web.assets_frontend` rather than `website.assets_frontend` because it needs to load on all frontend pages. The `website.assets_frontend` bundle is reserved for JavaScript that requires the website editor context.
+</Info>
+
+## Component reference
+
+### Layout & sections
+
+| Class | Description |
+|---|---|
+| `.zw-section` | Base section with 100px vertical padding |
+| `.zw-section-sm` | Smaller section with 60px vertical padding |
+| `.zw-section--dark` | Dark navy background variant |
+| `.zw-section--light` | Off-white (`#F4F7FC`) background variant |
+| `.zw-header` | Centered section header container (64px bottom margin) |
+| `.zw-title` | Large section heading — `clamp(2rem, 4vw, 3rem)`, Syne 800 |
+| `.zw-title--white` | White color variant of `.zw-title` |
+| `.zw-subtitle` | Section description text, muted color, max-width 560px |
+| `.zw-subtitle--white` | 70% white opacity variant |
+| `.zw-label` | Small uppercase category label with blue left-line pseudo-element |
+
+### Hero
+
+| Class | Description |
+|---|---|
+| `.zw-hero` | Full-viewport-height hero section with navy background and grid pattern |
+| `.zw-hero__glow` | Bottom-left decorative radial gradient orb |
+| `.zw-hero__grid` | Two-column grid (content + visual), collapses to 1 col at ≤1024px |
+| `.zw-hero__content` | Left column with text and CTAs |
+| `.zw-hero__label` | Pill-shaped label with pulsing dot (`pulse-dot` animation) |
+| `.zw-hero__title` | Large h1, `clamp(2.4rem, 5vw, 3.8rem)`, Syne 800 |
+| `.zw-hero__title .accent` | Gradient text span (blue → cyan) |
+| `.zw-hero__desc` | Description paragraph, 65% white opacity |
+| `.zw-hero__actions` | Button row (flex, wraps on small screens) |
+| `.zw-hero__stats` | Statistics counter row, separated by top border |
+| `.zw-hero__stat-num` | Individual stat number (Syne 800, cyan color for the span) |
+| `.zw-hero__stat-label` | Stat description, 45% white opacity |
+| `.zw-hero__visual` | Right column — hidden at ≤1024px; uses `float` CSS animation |
+| `.zw-hero__carousel` | Image carousel container |
+| `.zw-hero__img-wrap` | Rounded image wrapper, `aspect-ratio: 4/3` |
+| `.zw-hero__badge` | ISO 27001 floating badge, positioned `bottom: -20px left: -20px` |
+| `.zw-hero__badge-icon` | Gradient icon circle inside the badge |
+
+### Service cards
+
+| Class | Description |
+|---|---|
+| `.zw-services-grid` | Auto-fit grid, min card width 260px |
+| `.zw-service-card` | Individual service card with hover lift and shadow |
+| `.zw-service-card__bar` | Top gradient bar — width animates from 0 to 100% on hover |
+| `.zw-service-card__img` | Card image container, 180px fixed height |
+| `.zw-service-card__body` | Card text content, 28px padding |
+| `.zw-service-card__icon` | Icon circle, background changes to gradient on hover |
+| `.zw-service-card__title` | Card heading |
+| `.zw-service-card__link` | "Saber más" link — gap increases on hover |
+
+### Portfolio
+
+| Class | Description |
+|---|---|
+| `.zw-portfolio-grid` | 2-column homepage portfolio preview |
+| `.zw-portfolio-card` | Homepage portfolio card |
+| `.zw-portfolio-card__tag` | Category badge, top-left of image, blue pill |
+| `.zw-portfolio-full` | Full portfolio section wrapper |
+| `.zw-portfolio-full-grid` | Full portfolio `auto-fill` grid, min card 340px |
+| `.zw-pf-card` | Full portfolio card |
+| `.zw-pf-card__cat` | Category badge, bottom-left of image overlay |
+| `.zw-pf-card__meta` | Project metadata row (industry, duration, team) |
+| `.zw-portfolio-filters` | Filter button row, centered |
+| `.zw-filter-btn` | Individual filter button |
+| `.zw-filter-btn.active` | Active filter — blue fill |
+
+### Plan (pricing) cards
+
+| Class | Description |
+|---|---|
+| `.zw-plans` | Dark navy plans section with grid pattern background |
+| `.zw-plans-grid` | Auto-fit grid, min card 300px |
+| `.zw-plan-card` | Standard plan card, semi-transparent dark background |
+| `.zw-plan-card--featured` | Featured plan — blue tint + "Popular" badge via `::before` |
+| `.zw-plan-card__price` | Price display — Syne 800, 3rem, white |
+| `.zw-plan-card__period` | "/ mes" period label, 40% white opacity |
+| `.zw-plan-card__name` | Plan name, separated by bottom border |
+| `.zw-plan-card__features` | Feature list |
+| `.zw-plan-card__feature` | Individual feature item — cyan check icon |
+
+### Buttons
+
+| Class | Description |
+|---|---|
+| `.btn-zw-primary` | Primary filled blue button — hover lifts and adds blue shadow |
+| `.btn-zw-secondary` | Transparent with blue border — fills blue on hover |
+| `.btn-zw-outline-white` | White outlined button for dark backgrounds |
+
+### Utility
+
+| Class | Description |
+|---|---|
+| `.zw-tags` | Tag container (flex row, wraps) |
+| `.zw-tag` | Default grey tag (gray-100 background) |
+| `.zw-tag--blue` | Blue accent tag (10% blue background) |
+| `.zw-cta` | Call-to-action banner — gradient blue background |
+| `.zw-cta__inner` | CTA content flex row — stacks vertically on mobile |
+| `.zw-cta__btn` | White CTA button |
+
+## Animation classes
+
+| Class | Keyframe | Description |
+|---|---|---|
+| `.animate-fade-up` | `fadeUp` | Fades in while sliding up from 30px |
+| `.animate-fade-in` | `fadeIn` | Simple opacity fade in |
+| `.animate-slide-right` | `slideRight` | Slides in from -30px left |
+| `.animate-scale-in` | `scaleIn` | Scales from 0.92 to 1 with fade |
+| `.delay-1` through `.delay-6` | — | Animation delay in 0.1s increments (0.1s–0.6s) |
+
+<Tip>
+The `animate-fade-up` and `animate-scale-in` classes are CSS animations that fire on page load. Scroll-triggered reveal for cards (`.zw-service-card`, `.zw-pf-card`, etc.) is handled separately by the JavaScript intersection observer. See [JavaScript](/features/javascript) for details.
+</Tip>
+
+## Responsive breakpoints
+
+| Breakpoint | Changes |
+|---|---|
+| `≤1024px` | Hero grid → 1 col; hero visual hidden; service rows → 1 col; bidding grid → 1 col; about grid → 1 col; stats band → 2 cols |
+| `≤768px` | Sections → 70px padding; portfolio grids → 1 col; plans → 1 col; hero actions → column; CTA → column; form → 1 col; services grid → 1 col |
+| `≤480px` | Container padding → 16px; hero title → 2rem; team grid → 1 col |

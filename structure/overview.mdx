@@ -1,0 +1,155 @@
+---
+title: "Module overview"
+description: "Directory layout, manifest fields, module dependencies, and registered website pages for the Tema Zonaweb Odoo 18 module."
+---
+
+## Directory tree
+
+The module lives under the technical name `zonaweb_website`. Every folder and file has a distinct responsibility:
+
+```bash
+zonaweb_website/
+├── __init__.py                  # Imports controllers and models packages
+├── __manifest__.py              # Module metadata, dependencies, data files, asset bundles
+│
+├── controllers/
+│   ├── __init__.py
+│   └── main.py                  # ZonawebWebsite HTTP controller — all public routes
+│
+├── models/
+│   ├── __init__.py
+│   └── bidding_request.py       # zonaweb.bidding.request ORM model
+│
+├── views/
+│   ├── website_templates.xml    # QWeb templates: layout, all public pages, thank-you page
+│   ├── website_pages.xml        # website.page records (URL registration + SEO flags)
+│   ├── bidding_request_views.xml# Backend list / form / kanban views + window action + menus
+│   └── website_menu.xml         # website.menu entries injected into the main navigation
+│
+├── security/
+│   └── ir.model.access.csv      # ACL rules for zonaweb.bidding.request
+│
+├── data/
+│   └── website_data.xml         # Seed data loaded on install (sequences, etc.)
+│
+├── demo/
+│   └── demo_data.xml            # Demo records loaded in demo mode
+│
+└── static/
+    └── src/
+        ├── css/
+        │   └── zonaweb_style.css # Full theme stylesheet
+        ├── js/
+        │   └── zonaweb_script.js # Frontend JS (carousel, counters, filters, etc.)
+        └── img/                 # All raster images used by templates
+            ├── hero1.jpg
+            ├── hero2.jpg
+            ├── hero3.jpg
+            ├── about-image.jpg
+            ├── bidding-image.jpg
+            ├── contact-image.jpg
+            ├── portfolio1.jpg
+            ├── portfolio2.jpg
+            ├── portfolio3.jpg
+            ├── service1.jpg
+            ├── service2.jpg
+            ├── service3.jpg
+            ├── service4.jpg
+            ├── logo.png
+            └── banner.png
+```
+
+---
+
+## Manifest fields
+
+The `__manifest__.py` file is the authoritative descriptor read by Odoo's module loader.
+
+```python
+# __manifest__.py (condensed)
+{
+    'name':     'Tema Zonaweb',
+    'version':  '18.0.1.0.0',
+    'category': 'Theme/Corporate',
+    'summary':  'Tema corporativo profesional para Zonaweb',
+    'author':   'Zonaweb',
+    'website':  'https://www.zonaweb.com',
+    'license':  'LGPL-3',
+    'depends':  ['website', 'website_sale', 'mail', 'sale_management'],
+    'data': [
+        'security/ir.model.access.csv',
+        'views/website_templates.xml',
+        'views/website_pages.xml',
+        'views/bidding_request_views.xml',
+        'views/website_menu.xml',
+        'data/website_data.xml',
+    ],
+    'assets': {
+        'web.assets_frontend':     ['zonaweb_website/static/src/css/zonaweb_style.css'],
+        'website.assets_frontend': ['zonaweb_website/static/src/js/zonaweb_script.js'],
+    },
+    'demo':          ['demo/demo_data.xml'],
+    'installable':   True,
+    'auto_install':  False,
+    'application':   False,
+    'sequence':      100,
+    'images': [
+        'static/description/banner.png',
+        'static/description/theme_preview.png',
+    ],
+}
+```
+
+| Field | Value | Notes |
+|---|---|---|
+| `name` | Tema Zonaweb | Human-readable display name |
+| `version` | 18.0.1.0.0 | Odoo series prefix + module semver |
+| `category` | Theme/Corporate | Controls placement in the Apps list |
+| `license` | LGPL-3 | GNU Lesser General Public License v3 |
+| `installable` | True | Visible and installable via the Apps menu |
+| `auto_install` | False | Will not install automatically |
+| `application` | False | Listed as a module, not a top-level app |
+| `sequence` | 100 | Sort order in the Apps list |
+
+---
+
+## Module dependencies
+
+<CardGroup cols={2}>
+  <Card title="website" icon="globe">
+    Core Odoo website builder. Provides `website.layout`, `website.page`,
+    `website.menu`, the QWeb rendering pipeline, and public HTTP routing infrastructure.
+  </Card>
+  <Card title="website_sale" icon="shopping-cart">
+    E-commerce layer. Adds the `/shop` storefront, product catalogue, and cart
+    functionality referenced in the security plan CTAs.
+  </Card>
+  <Card title="mail" icon="envelope">
+    Chatter, followers, and activity mixins used by `zonaweb.bidding.request`
+    (`mail.thread`, `mail.activity.mixin`). Also provides the email template engine
+    for confirmation emails.
+  </Card>
+  <Card title="sale_management" icon="file-invoice-dollar">
+    Sales app. Contributes the `sale.sale_menu_root` menu anchor under which the
+    Licitaciones backend sub-menu is registered.
+  </Card>
+</CardGroup>
+
+---
+
+## Registered website pages
+
+All four pages are declared in `views/website_pages.xml` with `noupdate="1"`, meaning they are created on install and not overwritten by subsequent upgrades.
+
+| Record ID | Page name | URL | View ref | Published | Indexed |
+|---|---|---|---|---|---|
+| `website_page_bidding` | Solicitar Licitación | `/licencias` | `bidding_page` | Yes | Yes |
+| `website_page_servicios` | Servicios | `/servicios` | `servicios_page` | Yes | Yes |
+| `website_page_portafolio` | Portafolio | `/portafolio` | `portafolio_page` | Yes | Yes |
+| `website_page_nosotros` | Nosotros | `/nosotros` | `nosotros_page` | Yes | Yes |
+
+<Note>
+  All pages are published (`is_published = True`) and opt-in for search-engine
+  indexing (`website_indexed = True`) from the moment the module is installed.
+  No manual publishing step is required.
+</Note>

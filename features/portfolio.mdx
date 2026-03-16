@@ -1,0 +1,83 @@
+---
+title: "Portfolio page"
+description: "Filterable portfolio of completed projects at /portafolio, showcasing case studies across web development, applications, infrastructure, and security."
+---
+
+# Portfolio page
+
+**URL:** `/portafolio`  
+**Template:** `zonaweb_website.portafolio_page`  
+**Auth:** Public
+
+The portfolio page showcases six completed projects organized by category, with client-side JavaScript filtering.
+
+## Filter categories
+
+| Filter button | `data-filter` value | Description |
+|---|---|---|
+| Todos | `all` | Show all projects |
+| Desarrollo Web | `software` | Web development projects |
+| Aplicaciones | `app` | Application projects |
+| Infraestructura | `infra` | Infrastructure projects |
+| Seguridad | `security` | Security projects |
+
+Filtering is client-side: clicking a button removes the `active` class from all buttons, adds it to the clicked one, then sets `display: none` on cards whose `data-cat` attribute does not match the selected filter (or shows all cards when `all` is selected). See [JavaScript](/features/javascript) for the implementation.
+
+## Projects
+
+<CardGroup cols={2}>
+  <Card title="TMS — Sistema de Gestión de Transporte" icon="truck">
+    **Category:** Desarrollo Web (`software`)  
+    **Industry:** Logística  
+    **Duration:** 8 meses | **Team:** Equipo de 6  
+    **Stack:** React, Node.js (blue), MongoDB (grey)  
+    Real-time tracking and route optimization for transport and logistics management.
+  </Card>
+  <Card title="Reservas 360" icon="calendar">
+    **Category:** Aplicación (`app`)  
+    **Industry:** Hotelero  
+    **Duration:** 6 meses | **Team:** Equipo de 5  
+    **Stack:** Vue.js, PHP (blue), MySQL (grey)  
+    Online booking platform with payment integration and inventory management for hotel chain.
+  </Card>
+  <Card title="Sistema ERP Personalizado" icon="building">
+    **Category:** Aplicación (`app`)  
+    **Industry:** Manufactura  
+    **Duration:** 9 meses | **Team:** Equipo de 8  
+    **Stack:** .NET, C# (blue), SQL Server (grey)  
+    Integrated ERP for inventory control, production, and finance management.
+  </Card>
+  <Card title="Migración a Cloud" icon="cloud">
+    **Category:** Infraestructura (`infra`)  
+    **Industry:** Finanzas  
+    **Duration:** 4 meses | **Team:** Equipo de 4  
+    **Stack:** AWS, Docker (blue), Kubernetes (grey)  
+    Full migration from on-premise infrastructure to AWS for financial services company.
+  </Card>
+  <Card title="Auditoría de Seguridad" icon="shield">
+    **Category:** Seguridad (`security`)  
+    **Industry:** Salud  
+    **Duration:** 3 meses | **Team:** Equipo de 3  
+    **Stack:** Firewall, SIEM (blue), Cifrado (grey)  
+    Comprehensive security system for protecting sensitive health data.
+  </Card>
+  <Card title="Portal de Gestión Educativa" icon="graduation-cap">
+    **Category:** Desarrollo Web (`software`)  
+    **Industry:** Educación  
+    **Duration:** 7 meses | **Team:** Equipo de 5  
+    **Stack:** Django, PostgreSQL (blue), Redis (grey)  
+    Platform for course management, students, evaluations, and automated reports.
+  </Card>
+</CardGroup>
+
+## Card structure
+
+Each project card (`.zw-pf-card`) contains:
+- A category badge (`.zw-pf-card__cat`) positioned at the bottom-left of the image, overlaid on top of the image gradient
+- A `data-cat` attribute on the card root for JavaScript filtering
+- Technology tags (`.zw-tag` for grey, `.zw-tag--blue` for blue accent)
+- Project metadata (`.zw-pf-card__meta`): industry (`fa-building`), duration (`fa-calendar`), team size (`fa-users`)
+
+The full portfolio grid uses `repeat(auto-fill, minmax(340px, 1fr))`, collapsing to a single column on screens ≤768px.
+
+The page ends with a CTA banner: "¿Listo para tu próximo proyecto?" linking to `/licencias`.

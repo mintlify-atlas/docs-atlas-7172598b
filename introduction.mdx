@@ -1,0 +1,81 @@
+---
+title: "Introduction"
+description: "Tema Zonaweb is a professional corporate Odoo 18 website theme for IT services companies."
+---
+
+# Tema Zonaweb
+
+Tema Zonaweb (`zonaweb_website`) is a complete Odoo 18 module that transforms your Odoo instance into a professional corporate website for IT services companies. It provides a polished blue/navy brand experience with purpose-built pages, a bidding request system, and a security plan pricing section.
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Install and configure the module in minutes
+  </Card>
+  <Card title="Module Structure" icon="folder-tree" href="/structure/overview">
+    Understand how the module is organized
+  </Card>
+  <Card title="Website Pages" icon="browser" href="/features/homepage">
+    Explore all the built-in website pages
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/routes">
+    HTTP routes and data model reference
+  </Card>
+</CardGroup>
+
+## What's included
+
+Tema Zonaweb delivers a full-featured corporate website out of the box:
+
+<CardGroup cols={2}>
+  <Card title="Animated homepage" icon="house">
+    Hero carousel, statistics counters, service cards, portfolio preview, pricing plans, and testimonials
+  </Card>
+  <Card title="Services pages" icon="briefcase">
+    Detailed pages for Software Development, Network Infrastructure, Technical Support, and IT Security
+  </Card>
+  <Card title="Portfolio gallery" icon="images">
+    Filterable case studies with technology tags, industry labels, and project metadata
+  </Card>
+  <Card title="About / team" icon="users">
+    Company values, KPI stats band, and team member profiles
+  </Card>
+  <Card title="Bidding request system" icon="file-signature">
+    Full workflow from public form submission through internal approval with email confirmation
+  </Card>
+  <Card title="Security plan pricing" icon="shield-check">
+    Standard and Premium plan cards with feature lists and direct shop links
+  </Card>
+</CardGroup>
+
+## Key technical details
+
+| Detail | Value |
+|---|---|
+| Odoo version | 18.0 |
+| Module name | `zonaweb_website` |
+| Version | 18.0.1.0.0 |
+| Category | Theme/Corporate |
+| License | LGPL-3 |
+| Author | Zonaweb |
+| Dependencies | `website`, `website_sale`, `mail`, `sale_management` |
+
+## Brand colors
+
+The theme ships with three CSS custom properties declared in the layout template:
+
+```css
+:root {
+  --primary:   #0057FF;   /* Main blue — buttons, links, highlights */
+  --secondary: #0B1F3A;   /* Dark navy — hero backgrounds, section fills */
+  --accent:    #00C2FF;   /* Cyan — labels, badges, hover states */
+}
+```
+
+## Module dependencies
+
+The module extends the standard Odoo website stack:
+
+- **`website`** — Core Odoo website module (layout, pages, menus)
+- **`website_sale`** — Odoo e-commerce (shop links for plan purchases)
+- **`mail`** — Messaging and email template support
+- **`sale_management`** — Sales workflow integration

@@ -1,0 +1,105 @@
+---
+title: "Theme colors"
+description: "CSS custom properties and brand color system used throughout the Tema Zonaweb theme."
+---
+
+# Theme colors
+
+Tema Zonaweb defines its color palette in two places: the `theme_layout` template injects three brand variables into every page's `<head>`, and `zonaweb_style.css` declares a broader set of design-system variables on `:root`.
+
+## Brand palette (theme_layout)
+
+These three variables are injected by the `theme_layout` template and are the primary brand identifiers:
+
+| Variable | Hex | Usage |
+|---|---|---|
+| `--primary` | `#0057FF` | Buttons, links, highlights, active states |
+| `--secondary` | `#0B1F3A` | Hero backgrounds, dark section fills, footer |
+| `--accent` | `#00C2FF` | Labels, badges, hover states, cyan accents |
+
+## Full CSS variable set (zonaweb_style.css)
+
+The stylesheet declares a comprehensive set of design tokens on `:root`:
+
+| Variable | Value | Purpose |
+|---|---|---|
+| `--navy` | `#0B1F3A` | Primary dark background |
+| `--navy-mid` | `#112847` | Mid-dark shade |
+| `--navy-light` | `#1a3a5c` | Lighter dark shade |
+| `--blue` | `#0057FF` | Primary blue |
+| `--blue-hover` | `#0044CC` | Button hover state |
+| `--cyan` | `#00C2FF` | Cyan accent |
+| `--white` | `#FFFFFF` | White |
+| `--off-white` | `#F4F7FC` | Light section backgrounds |
+| `--gray-100` | `#EEF2F8` | Card backgrounds, dividers |
+| `--gray-200` | `#D8E2F0` | Borders |
+| `--gray-500` | `#7A8FA8` | Placeholder text |
+| `--gray-700` | `#3D5270` | Secondary text |
+| `--text` | `#0B1F3A` | Default body text color |
+| `--text-light` | `#5A7090` | Muted/secondary body text |
+
+The stylesheet also sets typography defaults: headings use `Syne` (weights 400–800), body text uses `DM Sans` (weights 300–500), both loaded from Google Fonts.
+
+## How colors are injected
+
+The `theme_layout` template inherits the global Odoo website layout and injects the CSS variables into the `<head>` element on every page:
+
+```xml
+<template id="theme_layout"
+          key="zonaweb_website.theme_layout"
+          name="Zonaweb Theme Layout"
+          inherit_id="website.layout">
+    <xpath expr="//head" position="inside">
+        <style>
+            :root {
+                --primary:   #0057FF;
+                --secondary: #0B1F3A;
+                --accent:    #00C2FF;
+            }
+        </style>
+    </xpath>
+</template>
+```
+
+Because these variables are declared on `:root`, they are available throughout the entire stylesheet. They complement (and in some cases alias) the variables defined in `zonaweb_style.css`.
+
+## Overriding colors
+
+To customize the brand colors without modifying module source files:
+
+<Steps>
+  <Step title="Open the Website editor">
+    In Odoo, go to **Website → Edit → Theme → Customize**.
+  </Step>
+  <Step title="Add a custom CSS snippet">
+    Use the custom CSS section in the website editor, or create a new template that inherits `website.layout` and adds a `<style>` block overriding the variables:
+
+    ```css
+    :root {
+        --primary:   #FF5700;   /* your brand color */
+        --secondary: #1A1A2E;   /* dark background */
+        --accent:    #FFD700;   /* accent color */
+    }
+    ```
+  </Step>
+  <Step title="Save and preview">
+    Save your customization. The new colors apply immediately to all pages.
+  </Step>
+</Steps>
+
+<Note>
+CSS custom properties cascade normally — any `:root` override in a later `<style>` block will take precedence over the values defined in `theme_layout`, so you do not need to modify the module source.
+</Note>
+
+## Color usage in components
+
+| Component class | Variable used |
+|---|---|
+| `.btn-zw-primary` | `background: var(--blue)` |
+| `.zw-hero` | `background: var(--navy)` |
+| `.zw-label` | `color: var(--blue)` |
+| `.zw-service-card__bar` | `background: linear-gradient(var(--blue), var(--cyan))` |
+| `.zw-plan-card--featured` | `background: rgba(var(--blue), 0.15)` |
+| `.zw-cta` | `background: linear-gradient(var(--blue), #0040CC)` |
+| `.zw-stats-band` | `background: var(--navy)` |
+| `.zw-hero__badge-icon` | `background: linear-gradient(var(--blue), var(--cyan))` |

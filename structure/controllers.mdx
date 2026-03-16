@@ -1,0 +1,200 @@
+---
+title: "Controllers"
+description: "HTTP route reference for the ZonawebWebsite controller — public pages, bidding form submission, and the JSON status endpoint."
+---
+
+## `ZonawebWebsite` controller
+
+All routes are defined in `controllers/main.py` inside a single controller class:
+
+```python
+from odoo import http
+from odoo.http import request
+import logging
+
+_logger = logging.getLogger(__name__)
+
+class ZonawebWebsite(http.Controller):
+    ...
+```
+
+The controller is registered automatically when `controllers/__init__.py` imports
+`main`. The top-level `__init__.py` imports the `controllers` package on module
+load.
+
+---
+
+## Route reference
+
+| Method | Path | HTTP type | Auth | CSRF | Website ctx | Returns |
+|---|---|---|---|---|---|---|
+| `servicios` | `/servicios` | `http` | `public` | — | Yes | Renders `zonaweb_website.servicios_page` |
+| `portafolio` | `/portafolio` | `http` | `public` | — | Yes | Renders `zonaweb_website.portafolio_page` |
+| `nosotros` | `/nosotros` | `http` | `public` | — | Yes | Renders `zonaweb_website.nosotros_page` |
+| `bidding` | `/licencias` | `http` | `public` | — | Yes | Renders `zonaweb_website.bidding_page` |
+| `submit_bidding` | `/submit-bidding` | `http` | `public` | **Required** | Yes | Renders thank-you page or error page |
+| `bidding_status` | `/api/bidding-status` | `json` | `public` | — | No | JSON object with `status` and `last_update` |
+
+<Note>
+  `website=True` on a route makes Odoo inject the active `website` object and
+  multi-website context into the request. All page-rendering routes set this
+  flag so that the website theme layout is applied automatically.
+</Note>
+
+---
+
+## Page routes
+
+The four page-rendering routes follow an identical pattern — they accept any
+keyword arguments from the query string and delegate directly to `request.render`:
+
+```python
+@http.route('/servicios', type='http', auth='public', website=True)
+def servicios(self, **kwargs):
+    return request.render('zonaweb_website.servicios_page')
+
+@http.route('/portafolio', type='http', auth='public', website=True)
+def portafolio(self, **kwargs):
+    return request.render('zonaweb_website.portafolio_page')
+
+@http.route('/nosotros', type='http', auth='public', website=True)
+def nosotros(self, **kwargs):
+    return request.render('zonaweb_website.nosotros_page')
+
+@http.route('/licencias', type='http', auth='public', website=True)
+def bidding(self, **kwargs):
+    return request.render('zonaweb_website.bidding_page')
+```
+
+---
+
+## `submit_bidding` — form handler
+
+**Route:** `POST /submit-bidding`  
+**Auth:** `public`  **CSRF:** required  **Website ctx:** Yes
+
+This handler processes the bidding request form submitted from `/licencias`.
+
+```python
+@http.route('/submit-bidding', type='http', auth='public',
+            methods=['POST'], website=True, csrf=True)
+def submit_bidding(self, **kwargs):
+    try:
+        estimated_budget = kwargs.get('estimated_budget')
+        bidding_request = request.env['zonaweb.bidding.request'].sudo().create({
+            'company_name':          kwargs.get('company_name'),
+            'contact_name':          kwargs.get('contact_name'),
+            'email':                 kwargs.get('email'),
+            'phone':                 kwargs.get('phone'),
+            'service_type':          kwargs.get('service_type'),
+            'project_description':   kwargs.get('project_description'),
+            'estimated_budget':      float(estimated_budget) if estimated_budget else 0.0,
+            'estimated_timeline':    kwargs.get('estimated_timeline') or False,
+            'company_sector':        kwargs.get('company_sector') or False,
+            'specific_requirements': kwargs.get('specific_requirements'),
+        })
+        try:
+            template = request.env.ref(
+                'zonaweb_website.email_template_bidding_confirmation'
+            )
+            template.sudo().send_mail(bidding_request.id, force_send=True)
+        except Exception as mail_error:
+            _logger.warning("No se pudo enviar email: %s", mail_error)
+
+        return request.render('zonaweb_website.bidding_thankyou', {
+            'bidding_id': bidding_request.name,
+        })
+    except Exception as e:
+        _logger.error("Error al procesar licitación: %s", str(e))
+        return request.render('website.http_error', {
+            'error_message': 'Error al procesar tu solicitud. Por favor, inténtalo de nuevo.',
+        })
+```
+
+### Logic walkthrough
+
+<Steps>
+  <Step title="Extract budget">
+    `estimated_budget` is read separately because it must be cast from string to
+    `float`. An empty or missing value is coerced to `0.0` to satisfy the
+    `Float` field type.
+  </Step>
+  <Step title="Create record via sudo">
+    `request.env['zonaweb.bidding.request'].sudo().create(...)` bypasses the
+    public user's normal ACL and uses the superuser context, ensuring record
+    creation succeeds even for unauthenticated visitors. Optional selection
+    fields (`estimated_timeline`, `company_sector`) are set to `False` when
+    the form field is empty, keeping them as unset rather than storing an empty
+    string.
+  </Step>
+  <Step title="Send confirmation email (best-effort)">
+    The handler attempts to find the email template
+    `zonaweb_website.email_template_bidding_confirmation` and send it
+    immediately with `force_send=True`. This inner `try/except` block means a
+    missing or broken template does not abort the request — failures are logged
+    as warnings and the flow continues.
+  </Step>
+  <Step title="Render thank-you page">
+    On success, renders `zonaweb_website.bidding_thankyou` and passes
+    `bidding_id` (the auto-generated sequence reference) to the template so the
+    user can see their reference number.
+  </Step>
+  <Step title="Handle errors">
+    Any unhandled exception in the outer block is caught, logged as an error,
+    and rendered through Odoo's built-in `website.http_error` template with a
+    user-friendly message in Spanish.
+  </Step>
+</Steps>
+
+---
+
+## `bidding_status` — JSON endpoint
+
+**Route:** `POST /api/bidding-status`  
+**Auth:** `public`  **Type:** `json`  **Website ctx:** No
+
+```python
+@http.route('/api/bidding-status', type='json', auth='public', methods=['POST'])
+def bidding_status(self, **kwargs):
+    bidding_id = kwargs.get('bidding_id')
+    if not bidding_id:
+        return {'error': 'Se requiere ID de licitación'}
+
+    bidding = request.env['zonaweb.bidding.request'].sudo().search([
+        ('name', '=', bidding_id)
+    ], limit=1)
+
+    if not bidding:
+        return {'error': 'Licitación no encontrada'}
+
+    return {
+        'status':      bidding.state,
+        'last_update': bidding.write_date.strftime('%Y-%m-%d %H:%M:%S'),
+    }
+```
+
+This endpoint allows a frontend or external client to poll the current state of
+a bidding request by its reference number.
+
+### Request body
+
+```json
+{ "bidding_id": "ZW/2024/00001" }
+```
+
+### Possible responses
+
+| Scenario | Response |
+|---|---|
+| Missing `bidding_id` | `{"error": "Se requiere ID de licitación"}` |
+| Record not found | `{"error": "Licitación no encontrada"}` |
+| Record found | `{"status": "draft", "last_update": "2024-06-01 10:23:45"}` |
+
+`status` will be one of: `draft`, `confirmed`, `approved`, `rejected`.
+
+<Warning>
+  This endpoint uses `auth='public'` with `.sudo()`, meaning any caller who
+  knows a valid reference number can query its current state. If bidding
+  references are considered sensitive, consider adding an additional token or
+  restricting access to authenticated users.
+</Warning>
