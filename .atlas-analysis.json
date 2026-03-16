@@ -1,0 +1,80 @@
+{
+  "projectType": "saas",
+  "projectName": "Tema Zonaweb",
+  "projectDescription": "A professional corporate Odoo 18 website theme for IT services companies, featuring service pages, portfolio, bidding request forms, and security plan pricing.",
+  "theme": "linden",
+  "primaryColor": "#0057FF",
+  "lightColor": "#00C2FF",
+  "darkColor": "#0B1F3A",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Overview",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "quickstart"]
+          },
+          {
+            "group": "Module Structure",
+            "pages": ["structure/overview", "structure/models", "structure/controllers", "structure/views", "structure/assets"]
+          }
+        ]
+      },
+      {
+        "tab": "Features",
+        "groups": [
+          {
+            "group": "Website Pages",
+            "pages": ["features/homepage", "features/services", "features/portfolio", "features/about", "features/bidding"]
+          },
+          {
+            "group": "Bidding System",
+            "pages": ["features/bidding-model", "features/bidding-workflow", "features/bidding-emails"]
+          },
+          {
+            "group": "Theme & Styling",
+            "pages": ["features/theme-colors", "features/css-components", "features/javascript"]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "HTTP Routes",
+            "pages": ["api/routes"]
+          },
+          {
+            "group": "Data Model",
+            "pages": ["api/bidding-request-model"]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Corporate website theme for Odoo 18 with blue/navy brand palette",
+    "Animated homepage hero with image carousel and statistics counters",
+    "Services pages for Software Development, Network Infrastructure, Technical Support, and IT Security",
+    "Filterable portfolio/case studies gallery",
+    "About/team page with company values and metrics",
+    "Bidding request form with multi-step workflow (draft → confirmed → approved/rejected)",
+    "Automated confirmation email upon bidding submission",
+    "Security plan pricing section with Standard and Premium tiers",
+    "JSON API endpoint for checking bidding request status",
+    "Access control: public create, user read/write, admin full access"
+  ],
+  "publicApiSurface": [
+    "GET /servicios — Services page",
+    "GET /portafolio — Portfolio page",
+    "GET /nosotros — About us page",
+    "GET /licencias — Bidding request form page",
+    "POST /submit-bidding — Submit a new bidding request (CSRF protected)",
+    "POST /api/bidding-status — JSON API to check bidding request status by ID",
+    "zonaweb.bidding.request Odoo model",
+    "BiddingRequest.action_confirm()",
+    "BiddingRequest.action_approve()",
+    "BiddingRequest.action_reject()"
+  ]
+}
